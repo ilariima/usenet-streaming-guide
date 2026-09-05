@@ -24,6 +24,51 @@ Resources this guide needs:
 
 Create beszel's resource before finishing its setup — its token and key come from the hub web UI.
 
+## Managing Pangolin from Dockhand
+
+Redhair's installer puts Pangolin outside Dockhand's stack folder, so Dockhand shows it as
+**Untracked** and can't deploy or edit it. Adopting it fixes that.
+
+**1. Find Pangolin's compose file.**
+
+```bash
+docker inspect pangolin --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}'
+docker inspect pangolin --format '{{ index .Config.Labels "com.docker.compose.project.config_files" }}'
+```
+
+Usually `/opt/pangolin`. Use whatever these report.
+
+**2. Mount that directory into Dockhand.** Find Dockhand's own compose the same way:
+
+```bash
+docker inspect dockhand --format '{{ index .Config.Labels "com.docker.compose.project.config_files" }}'
+```
+
+Add a bind mount under the **`dockhand`** service — not `socket-proxy` — using Pangolin's
+real directory on both sides:
+
+```yaml
+services:
+  dockhand:
+    volumes:
+      - dockhand_data:/app/data
+      - /opt/pangolin:/opt/pangolin
+```
+
+Matching paths on both sides keeps relative references like `./config` working. Then
+recreate Dockhand only:
+
+```bash
+cd "$(docker inspect dockhand --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}')"
+docker compose up -d --force-recreate dockhand
+```
+
+**3. Import it.** In Dockhand: **Stacks → Import** (**Adopt** on older builds) → browse to
+Pangolin's directory → select `docker-compose.yml` → confirm, then refresh.
+
+Pangolin flips from **Untracked** to **Internal**. Don't paste the YAML into **Create
+stack** instead — that makes a duplicate stack rather than adopting the running one.
+
 ## Updating Pangolin
 
 Versions are pinned. Change the pins first, then pull. Check the [release notes](https://docs.pangolin.net/self-host/how-to-update) — some releases need config changes.

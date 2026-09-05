@@ -413,8 +413,9 @@ volumes:
 
 ## .env
 
-This stack declares no `env_file` — its values go in Dockhand's environment editor, not a
-file on disk.
+There is no `.env.example` for this stack. Run
+[`scripts/gluetun-ddns-find-values.sh`](../scripts/gluetun-ddns-find-values.sh) on the host
+and it prints your `.env`, four of the five values already filled in:
 
 ```dotenv
 DDNS_HOST=CHANGE_ME.example.com
@@ -423,8 +424,6 @@ DOCKHAND_STACK=gluetun
 DOCKHAND_NETWORK=your_dockhand_network
 DOCKHAND_ENV_NAME="Your Environment"
 ```
-
-`scripts/gluetun-ddns-find-values.sh` prints these five lines filled in — see step 1.
 
 | Variable | What to put |
 | --- | --- |
