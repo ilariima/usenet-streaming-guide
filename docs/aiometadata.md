@@ -118,14 +118,14 @@ SIMKL_REDIRECT_URI=
 # Register the app with this exact Redirect URI (no trailing slash):
 #   https://<HOST_NAME>/api/auth/trakt/callback
 #
-# TRAKT_REDIRECT_URI is optional — it defaults to that same value. Set it only
-# if you registered something different.
+# Leave TRAKT_REDIRECT_URI blank — it is derived from HOST_NAME, so there is
+# only one place to edit. Set it only if you registered something different.
 TRAKT_CLIENT_ID=CHANGEME_TRAKT_CLIENT_ID
 TRAKT_CLIENT_SECRET=CHANGEME_TRAKT_CLIENT_SECRET
-TRAKT_REDIRECT_URI=https://aiometadata.example.com/api/auth/trakt/callback
+TRAKT_REDIRECT_URI=
 ```
 
-**Replace:** `HOST_NAME`, `TRAKT_REDIRECT_URI` (same domain as `HOST_NAME`),
+**Replace:** `HOST_NAME`,
 `ADDON_PASSWORD` and `ADMIN_KEY` (`openssl rand -hex 16` each), and the Simkl and
 Trakt client IDs and secrets — from
 [simkl.com/oauth/applications](https://simkl.com/oauth/applications) and
@@ -133,9 +133,10 @@ Trakt client IDs and secrets — from
 
 ## Deploy
 
-Deploy this before [jikan](jikan.md) — it creates the `aiometadata` network.
+Deploy [pangolin](pangolin.md) first, and this before [jikan](jikan.md) — it creates the
+`aiometadata` network jikan attaches to.
 
-1. Dockhand → **Stacks → Add Stack**, name `aiometadata`, paste the compose above, save.
+1. Dockhand → **Stacks → Create**, name `aiometadata`, paste the compose above, save.
 2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
 4. Trakt: create a **new** app at [trakt.tv/oauth/applications](https://trakt.tv/oauth/applications)

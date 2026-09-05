@@ -66,7 +66,6 @@ networks:
 # ==============================================================================
 
 # --- Server ---
-PORT=1610
 NODE_ENV=production
 
 # --- Database ---
@@ -76,21 +75,23 @@ DB_TYPE=postgres
 # container, and that value wins over anything set here.
 DATABASE_URL=
 
-# SQLite fallback paths — ignored while DB_TYPE=postgres.
-# DATA_DIR must match the volume mount in compose.yaml.
+# Must match the volume mount in compose.yaml. In SQLite mode the database is
+# always DATA_DIR/aio.db.
 DATA_DIR=/app/data
-DB_FILENAME=aio.db
 
 # --- Limits ---
 # Max encrypted sync blob, in bytes. Default 104857600 (100 MB).
 MAX_SYNC_PAYLOAD_SIZE=104857600
-# Outgoing request timeout, in milliseconds.
-MAX_TIMEOUT=20000
 
 # --- Encryption ---
 # Encrypts sensitive data at rest. Leave empty and the server generates one on
 # first run, saved to DATA_DIR/server_secret.key. Back that file up.
 ENCRYPTION_KEY=
+
+# --- Reverse proxy ---
+# Trust X-Forwarded-For from Pangolin so rate limiting sees real client IPs.
+# Must be the literal `true` — the server only tests for 'true' and '1'.
+TRUST_PROXY=true
 
 # --- CORS ---
 # Comma-separated allowed origins, or * for all.
@@ -117,7 +118,7 @@ Deploy the pangolin stack first — it creates the `pangolin_frontend` network.
    openssl rand -hex 16
    ```
 
-2. In Dockhand, create a stack named `aiomanager` and paste the compose above. Replace
+2. Dockhand → **Stacks → Create**, name it `aiomanager`, paste the compose above. Replace
    `CHANGEME_DB_PASSWORD` in **both** places — `DATABASE_URL` and `POSTGRES_PASSWORD` —
    with that same value.
 

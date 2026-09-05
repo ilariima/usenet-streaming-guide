@@ -99,8 +99,7 @@ services:
 networks:
   jikan:
     driver: bridge
-  # The network your consumer app already runs on. Rename to match yours, or
-  # delete this entry (and the reference above) to run Jikan self-contained.
+  # Created by the aiometadata stack — deploy that first.
   aiometadata:
     external: true
 

@@ -36,6 +36,23 @@ for n in aiostreams aiometadata jikan aiomanager gluetun wireguard beszel; do
 done
 rm -f /tmp/_inline.yaml /tmp/_inline.env
 
+echo "== inlined helper script matches scripts/ =="
+python3 - <<'PYEOF'
+import pathlib, re, sys
+doc = pathlib.Path("docs/gluetun-ddns.md").read_text()
+m = re.search(r"```bash\n(.*?\n)   ```", doc, re.S)
+if not m:
+    print("  FAIL: no inlined script block found"); sys.exit(1)
+page = "\n".join(l[3:] if l.startswith("   ") else l for l in m.group(1).splitlines()).rstrip()
+disk = pathlib.Path("scripts/gluetun-ddns-find-values.sh").read_text().rstrip()
+if page == disk:
+    print("  ok   gluetun-ddns")
+else:
+    print("  DRIFT gluetun-ddns: inlined script differs from scripts/gluetun-ddns-find-values.sh")
+    sys.exit(1)
+PYEOF
+[ $? -ne 0 ] && fail=1
+
 echo "== no banned sections =="
 if grep -rlnE '^## (Gotchas|Managing the stack|Troubleshooting|Requirements|What you)' docs/ 2>/dev/null; then
   echo "  FAIL: banned section above"; fail=1
@@ -62,7 +79,7 @@ fi
 echo "== internal links resolve =="
 while IFS= read -r line; do
   f="${line%%:*}"; rest="${line#*:}"
-  for t in $(grep -oE '\]\([^)#][^)]*\.md[^)]*\)' <<<"$rest" | sed 's/](\(.*\))/\1/' | cut -d'#' -f1); do
+  for t in $(grep -oE '\]\((\.\.?/)?[^)#:][^)]*\)' <<<"$rest" | sed 's/](\(.*\))/\1/' | cut -d'#' -f1); do
     p="$(cd "$(dirname "$f")" && cd "$(dirname "$t")" 2>/dev/null && pwd)/$(basename "$t")"
     [ -f "$p" ] || { echo "  MISSING $f -> $t"; fail=1; }
   done

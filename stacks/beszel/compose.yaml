@@ -8,7 +8,7 @@ services:
     environment:
       APP_URL: ${APP_URL}
     ports:
-      - "${HUB_PORT}:8090"
+      - "8090:8090"
     volumes:
       - ./beszel_data:/beszel_data
       - ./beszel_socket:/beszel_socket

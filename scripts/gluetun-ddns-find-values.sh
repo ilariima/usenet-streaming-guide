@@ -1,7 +1,7 @@
 #!/bin/sh
 # Works out the values for the gluetun-ddns watcher .env and prints them
 # ready to paste. Reads only; changes nothing.
-# Part of the Usenet Streaming Guide — docs/networking/gluetun-ddns.md
+# Part of the Usenet Streaming Guide — docs/gluetun-ddns.md
 
 # If your containers are named differently, change these two:
 GLUETUN=gluetun; DOCKHAND=dockhand
@@ -10,6 +10,11 @@ WD=$(sudo docker inspect "$GLUETUN" --format '{{index .Config.Labels "com.docker
 PROJ=$(sudo docker inspect "$GLUETUN" --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null)
 NETS=$(sudo docker inspect "$DOCKHAND" --format '{{range $n, $_ := .NetworkSettings.Networks}}{{println $n}}{{end}}' 2>/dev/null | grep -v '^$')
 NET=$(printf '%s\n' "$NETS" | grep -v 'socket-proxy' | head -n 1); [ -n "$NET" ] || NET=$(printf '%s\n' "$NETS" | head -n 1)
+
+# The watcher reaches Dockhand by container name; the default assumes "dockhand".
+URLLINE=""
+[ "$DOCKHAND" != "dockhand" ] && URLLINE="
+DOCKHAND_URL=http://$DOCKHAND:3000"
 OTHER=$(printf '%s\n' "$NETS" | grep -v "^${NET}$" | tr '\n' ' ')
 
 
@@ -30,12 +35,17 @@ if [ -n "$DIR" ] && sudo test -f "$DIR/.env"; then
   sudo grep -q '^WIREGUARD_ENDPOINT_IP=' "$DIR/.env" \
     && CHK="[ok]   WIREGUARD_ENDPOINT_IP is already set in it" \
     || CHK="[note] WIREGUARD_ENDPOINT_IP not set yet; the watcher will add it"
+  case "$ENVNAME" in
+    ''|*[!0-9]*) ;;          # non-numeric is a real name
+    *) ENVNAME="" ;;          # purely numeric is an id, not a name
+  esac
   if [ -n "$ENVNAME" ]; then
     ENVLINE="DOCKHAND_ENV_NAME=\"$ENVNAME\""
     ENVCHK="[ok]   environment name read from the stack path"
   else
     ENVLINE='DOCKHAND_ENV_NAME="CHANGE_ME"'
-    ENVCHK="[!]    could not read the environment name; copy it from Dockhand's menu"
+    ENVCHK="[!]    could not read the environment name; copy it from Dockhand's menu
+         (or use DOCKHAND_ENV_ID=<number> instead)"
   fi
   cat <<OUT
 
@@ -48,7 +58,7 @@ DDNS_HOST=CHANGE_ME.example.com
 GLUETUN_STACK_DIR_HOST="$DIR"
 DOCKHAND_STACK=$PROJ
 DOCKHAND_NETWORK=$NET
-$ENVLINE
+$ENVLINE$URLLINE
 --------------------------------------------------------------
   [ok]   found the Gluetun .env
   $CHK

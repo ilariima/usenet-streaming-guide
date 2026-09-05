@@ -52,7 +52,7 @@ networks:
 #   Endpoint   = ip:port -> WIREGUARD_ENDPOINT_IP + WIREGUARD_ENDPOINT_PORT
 #   AllowedIPs = ...   ->  WIREGUARD_ALLOWED_IPS
 #   PresharedKey = ... ->  WIREGUARD_PRESHARED_KEY  (only if present)
-#   DNS        = ...   ->  DNS_ADDRESS              (only if present)
+#   DNS        = ...   ->  DNS_UPSTREAM_PLAIN_ADDRESSES  (only if present)
 # ==============================================================================
 
 # --- Your client keypair / address ---
@@ -71,33 +71,33 @@ WIREGUARD_ENDPOINT_PORT=51820
 WIREGUARD_ALLOWED_IPS=0.0.0.0/0
 # Keeps the tunnel alive through NAT. 25s is the usual value.
 WIREGUARD_PERSISTENT_KEEPALIVE_INTERVAL=25s
-# Lower this if connections hang on large transfers. Max 1440.
-WIREGUARD_MTU=1320
+# Leave unset — gluetun discovers the maximum MTU itself. Setting it disables
+# that discovery, so only set it if large transfers hang.
+#WIREGUARD_MTU=1320
 
 # --- HTTP proxy logging ---
 HTTPPROXY_LOG=on
 
 # --- DNS (optional) ---
-# The resolver gluetun forwards queries to. Use the DNS line from your provider's
-# WireGuard config if it has one, or pick any resolver you trust.
-#DNS_ADDRESS=1.1.1.1
-#
-# Setting DNS_ADDRESS makes gluetun use plain UDP DNS instead of its default
-# DNS-over-TLS. The queries still go through the VPN tunnel. To keep DoT and just
-# change resolver, leave DNS_ADDRESS unset and use this instead:
+# Gluetun runs DNS-over-TLS to Cloudflare by default. To use a different DoT
+# resolver, name it here:
 #DNS_UPSTREAM_RESOLVERS=quad9
+#
+# To use the plain resolver from your provider's WireGuard config instead, set
+# BOTH of these — the address is parsed as ip:port, so the port is required.
+# This drops DNS-over-TLS; the queries still travel inside the tunnel.
+#DNS_UPSTREAM_PLAIN_ADDRESSES=1.1.1.1:53
+#DNS_UPSTREAM_RESOLVER_TYPE=plain
 ```
 
 **Replace:** every `WIREGUARD_` value, from your VPN provider's WireGuard config.
-
-Every value comes from your provider's WireGuard `.conf`:
 
 
 ## Deploy
 
 Deploy this stack before any stack that attaches to the `gluetun` network.
 
-1. Dockhand → new stack `gluetun`, paste the compose above.
+1. Dockhand → **Stacks → Create**, name it `gluetun`, paste the compose above.
 2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
 4. In each consumer app's own settings, set its outbound HTTP proxy to `http://gluetun:8888`.

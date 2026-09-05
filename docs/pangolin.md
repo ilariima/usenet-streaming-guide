@@ -56,11 +56,12 @@ cd "$(docker inspect dockhand --format '{{ index .Config.Labels "com.docker.comp
 docker compose up -d --force-recreate dockhand
 ```
 
-**3. Import it.** In Dockhand: **Stacks → Import** (**Adopt** on older builds) → browse to
-Pangolin's directory → select `docker-compose.yml` → confirm, then refresh.
+**3. Point Dockhand at the compose file.** Open the pangolin stack in Dockhand — it shows
+**No compose file selected**. Click **Browse for compose file**, navigate to the directory
+you mounted in step 2, select the compose file, and save.
 
-Pangolin flips from **Untracked** to **Internal**. Don't paste the YAML into **Create
-stack** instead — that makes a duplicate stack rather than adopting the running one.
+Pangolin flips from **Untracked** to **Internal**, and you can edit and redeploy it from
+Dockhand from then on.
 
 ## Updating Pangolin
 

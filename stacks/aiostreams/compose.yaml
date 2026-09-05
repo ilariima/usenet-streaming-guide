@@ -18,7 +18,7 @@ networks:
   # Created by the Pangolin stack.
   pangolin_frontend:
     external: true
-  # Created by this stack. Other addons attach to it as external.
+  # Created by this stack, for addon-to-addon traffic (e.g. NZBDavex).
   aiostreams:
     name: aiostreams
   # Created by the gluetun stack.

@@ -74,6 +74,8 @@ stacks/<name>/.env.example
 In Dockhand: **Stacks → Create**, paste `compose.yaml` into the compose panel and
 `.env.example` into the `.env` panel beside it, fill in every `CHANGEME_` value, deploy.
 
+gluetun-ddns is the exception — it has no `.env.example`; a script generates its values.
+
 ---
 
 MIT licensed. Built on [Redhair's guides](https://redhair.gitbook.io/redhair-guides).

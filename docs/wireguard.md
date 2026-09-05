@@ -74,8 +74,9 @@ PEERS=1
 # DNS the client uses while connected.
 PEERDNS=1.1.1.1
 # 0.0.0.0/0,::/0 sends ALL client traffic through the tunnel.
-# Use 10.13.13.0/24 instead to reach only this server, leaving normal browsing
-# on the client's own connection.
+# For split tunnelling, list the tunnel subnet AND the host you want to reach:
+#   10.13.13.0/24,<your server's IP>/32
+# The tunnel subnet alone only reaches the wireguard container, not the host.
 ALLOWEDIPS=0.0.0.0/0,::/0
 
 # --- Tunnel network ---
@@ -91,7 +92,7 @@ TZ=Etc/UTC
 # Where peer configs and server keys are stored, relative to this file.
 CONFIG_PATH=./config
 
-# Prints peer configs and QR codes to the container log on start.
+# Prints each peer's QR code to the container log on start.
 LOG_CONFS=true
 ```
 
@@ -105,15 +106,20 @@ LOG_CONFS=true
    sudo ufw allow 51821/udp
    ```
 
-2. Create the stack in Dockhand and paste the compose above.
+2. Dockhand → **Stacks → Create**, name it `wireguard`, paste the compose above.
 
 3. Paste the `.env` above into the `.env` panel beside it.
 
 4. Deploy the stack in Dockhand.
 
-5. Read the peer config out of the log — scan the QR code with the WireGuard mobile app, or
-   import the printed config on a laptop.
+5. For a phone, scan the QR code from the log with the WireGuard app:
 
    ```bash
    docker logs wireguard
+   ```
+
+   For a laptop, take the config file itself — the log only carries QR codes:
+
+   ```bash
+   docker exec wireguard cat /config/peer1/peer1.conf
    ```

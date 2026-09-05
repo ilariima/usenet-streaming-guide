@@ -29,7 +29,7 @@ networks:
   # Created by the Pangolin stack.
   pangolin_frontend:
     external: true
-  # Created by this stack. Other addons attach to it as external.
+  # Created by this stack, for addon-to-addon traffic (e.g. NZBDavex).
   aiostreams:
     name: aiostreams
   # Created by the gluetun stack.
@@ -50,9 +50,10 @@ networks:
 # resource. Stremio calls this from the internet.
 BASE_URL=https://aiostreams.example.com
 
-# --- Dashboard login (optional) ---
+# --- Dashboard login (required) ---
 # Comma-separated user:password pairs, e.g. alice:pass1,bob:pass2
-# Omit entirely to leave the dashboard unauthenticated.
+# The login form validates against this list and nothing else, so removing it
+# locks everyone out, including you.
 AIOSTREAMS_AUTH=admin:CHANGEME_PASSWORD
 
 # --- Encryption key (required) ---
@@ -74,7 +75,7 @@ SECRET_KEY=CHANGEME_RUN_openssl_rand_hex_32
    openssl rand -hex 32
    ```
 
-2. In Dockhand, create a stack named `aiostreams` and paste the compose above.
+2. Dockhand → **Stacks → Create**, name it `aiostreams`, paste the compose above.
 
 3. Paste the `.env` above into the `.env` panel beside it.
 4. Deploy the stack in Dockhand.

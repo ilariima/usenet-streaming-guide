@@ -108,8 +108,7 @@ services:
 networks:
   jikan:
     driver: bridge
-  # The network your consumer app already runs on. Rename to match yours, or
-  # delete this entry (and the reference above) to run Jikan self-contained.
+  # Created by the aiometadata stack — deploy that first.
   aiometadata:
     external: true
 
@@ -141,8 +140,11 @@ volumes:
 APP_URL=http://127.0.0.1:8080
 
 # --- MongoDB (cached anime/manga data) ---
-# Applied ONLY on first run, while the jikan_mongo volume is empty.
-# Changing these later does nothing unless you wipe the volume.
+# MongoDB applies these only on first run, while the jikan_mongo volume is
+# empty — but jikan-rest re-reads all three every time it starts. Changing them
+# after the first deploy breaks authentication (MONGO_USER, MONGO_PASSWORD) or
+# silently points jikan-rest at an empty database (MONGO_DATABASE).
+# To change them, wipe the jikan_mongo volume and re-run the indexers.
 MONGO_USER=jikan
 MONGO_PASSWORD=CHANGEME_MONGO_PASSWORD
 MONGO_DATABASE=jikan
@@ -164,7 +166,7 @@ openssl rand -hex 24
 
 ## Deploy
 
-1. Dockhand → Stacks → Add Stack, name it `jikan`, paste the compose.
+1. Dockhand → **Stacks → Create**, name it `jikan`, paste the compose.
 2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
 4. Fill the search index. It starts empty, so until it's filled, anime search and the
