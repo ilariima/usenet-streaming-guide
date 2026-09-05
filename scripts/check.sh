@@ -66,7 +66,7 @@ while IFS= read -r line; do
     p="$(cd "$(dirname "$f")" && cd "$(dirname "$t")" 2>/dev/null && pwd)/$(basename "$t")"
     [ -f "$p" ] || { echo "  MISSING $f -> $t"; fail=1; }
   done
-done < <(grep -rn '](.*\.md' --include='*.md' . 2>/dev/null | grep -v '^./private/')
+done < <(grep -rn '](.*\.md' --include='*.md' . 2>/dev/null)
 [ $fail -eq 0 ] && echo "  ok   all resolve"
 
 exit $fail
