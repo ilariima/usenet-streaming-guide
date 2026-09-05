@@ -413,8 +413,15 @@ volumes:
 
 ## .env
 
-There is no `.env.example` for this stack. The script in step 1 below prints your `.env`
-with four of the five values already filled in:
+Run this on the Docker host. It works out your values and prints the `.env` ready to
+paste — copy its output into the `.env` panel when you create the stack.
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/ilariima/usenet-streaming-guide/main/scripts/gluetun-ddns-find-values.sh
+sh gluetun-ddns-find-values.sh
+```
+
+What it prints looks like this — four values filled in, `DDNS_HOST` left for you:
 
 ```dotenv
 DDNS_HOST=CHANGE_ME.example.com
@@ -424,29 +431,21 @@ DOCKHAND_NETWORK=your_dockhand_network
 DOCKHAND_ENV_NAME="Your Environment"
 ```
 
-| Variable | What to put |
+**Replace:** `DDNS_HOST` — the DDNS hostname that follows your VPN endpoint. The script
+can't work that one out.
+
+| Also add | When |
 | --- | --- |
-| `DDNS_HOST` | The DDNS hostname that follows your VPN endpoint. The script cannot work this one out. |
-| `DOCKHAND_TOKEN` | Only if Dockhand authentication is on. Add it as a sixth line. |
-| `DOCKHAND_URL` | Only if your Dockhand container isn't named `dockhand`. The script emits it when needed. |
-| `DOCKHAND_ENV_ID` | Use instead of `DOCKHAND_ENV_NAME` if the script couldn't read a name. |
+| `DOCKHAND_TOKEN` | Dockhand authentication is on |
+| `DOCKHAND_URL` | Your Dockhand container isn't named `dockhand` — the script emits it for you |
+| `DOCKHAND_ENV_ID` | The script couldn't read an environment name |
 
 ## Deploy
 
-1. On the Docker host, download and run the helper script. It reads two
-   `docker inspect` calls and changes nothing:
-
-   ```bash
-   curl -fsSLO https://raw.githubusercontent.com/ilariima/usenet-streaming-guide/main/scripts/gluetun-ddns-find-values.sh
-   sh gluetun-ddns-find-values.sh
-   ```
-
-   It prints the five lines above with your values filled in. Copy them.
-
-2. Dockhand → **Stacks → Create**, name it `gluetun-ddns`. The name must differ from your
+1. Dockhand → **Stacks → Create**, name it `gluetun-ddns`. The name must differ from your
    gluetun stack.
 
-3. Paste the compose file into the compose editor, and the five lines into the environment
-   editor. Replace `CHANGE_ME.example.com` with your DDNS hostname.
+2. Paste the compose above into the compose editor, and the script's output into the `.env`
+   panel.
 
-4. Deploy.
+3. Deploy.
