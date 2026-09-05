@@ -12,17 +12,7 @@ Install it from Redhair's guide: [4 Reverse Proxy — Pangolin](https://redhair.
 4. **Add Target** — **Host:** the container name, **Port:** the port inside the container
 5. **Create Resource**
 
-Resources this guide needs:
-
-| Name / Subdomain | Host | Port |
-|---|---|---|
-| `aiostreams` | `aiostreams` | `3000` |
-| `aiometadata` | `aiometadata` | `3232` |
-| `aiomanager` | `aiomanager` | `1610` |
-| `beszel` | `beszel` | `8090` |
-| `dockhand` | `dockhand` | `3000` |
-
-Create beszel's resource before finishing its setup — its token and key come from the hub web UI.
+The values for each service are on its own page.
 
 ## Managing Pangolin from Dockhand
 
