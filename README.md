@@ -4,8 +4,11 @@ Every service I run on my own server, with the compose file, the `.env`, and the
 get it working. This is the exact stack I use daily — not a survey of options.
 
 Start with **[Redhair's Selfhosting Guide](https://redhair.gitbook.io/redhair-guides/selfhosting-guide-gui-version)**.
-It gets you a VPS, a domain, Pangolin and Dockhand. This guide picks up from there and adds
-everything else.
+It covers the VPS, the domain, Pangolin, Dockhand, AIOStreams, AIOMetadata and usenet
+streaming.
+
+**This guide assumes you followed it** and already have at least Pangolin and Dockhand
+running. It re-covers the services Redhair does, as they're set up here, and adds the rest.
 
 ---
 
