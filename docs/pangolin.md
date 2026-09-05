@@ -34,8 +34,8 @@ Usually `/opt/pangolin`. Use whatever these report.
 docker inspect dockhand --format '{{ index .Config.Labels "com.docker.compose.project.config_files" }}'
 ```
 
-Add a bind mount under the **`dockhand`** service — not `socket-proxy` — using Pangolin's
-real directory on both sides:
+That compose has two services, `dockhand` and `socket-proxy`. Add the mount under
+**`dockhand`** — that's the container doing the file browsing and importing:
 
 ```yaml
 services:
@@ -45,8 +45,11 @@ services:
       - /opt/pangolin:/opt/pangolin
 ```
 
-Matching paths on both sides keeps relative references like `./config` working. Then
-recreate Dockhand only:
+Put Pangolin's real path on **both sides of the colon**. Pangolin's compose refers to
+`./config`, which only resolves if the path inside the container is the same as the path on
+the host.
+
+Then recreate Dockhand only:
 
 ```bash
 cd "$(docker inspect dockhand --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}')"
