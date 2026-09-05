@@ -135,6 +135,11 @@ volumes:
 # connection string jikan-rest builds from these values.
 # ==============================================================================
 
+# The indexers fetch each entry through jikan-rest's own HTTP API, so it has to
+# know its own address. Without this they default to http://localhost (port 80)
+# and fail with "Connection refused".
+APP_URL=http://127.0.0.1:8080
+
 # --- MongoDB (cached anime/manga data) ---
 # Applied ONLY on first run, while the jikan_mongo volume is empty.
 # Changing these later does nothing unless you wipe the volume.
