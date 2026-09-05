@@ -119,3 +119,6 @@ redeploy.
 | HTTP | beszel | beszel | beszel | 8090 |
 
 Resources → Public → Add Resource, then Add Target.
+
+Create this resource **before** finishing setup — the token and key come from the hub's web
+UI, which you reach through it.
