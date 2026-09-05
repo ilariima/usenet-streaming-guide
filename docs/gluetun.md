@@ -88,22 +88,16 @@ HTTPPROXY_LOG=on
 #DNS_UPSTREAM_RESOLVERS=quad9
 ```
 
+**Replace:** every `WIREGUARD_` value, from your VPN provider's WireGuard config.
+
 Every value comes from your provider's WireGuard `.conf`:
 
-| Variable | What to put |
-|---|---|
-| `WIREGUARD_PRIVATE_KEY` | `PrivateKey` from `[Interface]` |
-| `WIREGUARD_ADDRESSES` | `Address` from `[Interface]` |
-| `WIREGUARD_PUBLIC_KEY` | `PublicKey` from `[Peer]` — the server's key, not yours |
-| `WIREGUARD_ENDPOINT_IP` | The IP half of `Endpoint` in `[Peer]` |
-| `WIREGUARD_ENDPOINT_PORT` | The port half of `Endpoint` in `[Peer]` |
-| `WIREGUARD_PRESHARED_KEY` | Uncomment and set only if `[Peer]` has a `PresharedKey` line |
 
 ## Deploy
 
 Deploy this stack before any stack that attaches to the `gluetun` network.
 
 1. Dockhand → new stack `gluetun`, paste the compose above.
-2. Over SSH, create `.env` in the stack directory with the contents above.
+2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
 4. In each consumer app's own settings, set its outbound HTTP proxy to `http://gluetun:8888`.

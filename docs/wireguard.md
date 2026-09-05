@@ -95,9 +95,7 @@ CONFIG_PATH=./config
 LOG_CONFS=true
 ```
 
-| Variable | What to put |
-|---|---|
-| `SERVERURL` | The VPS public IP or hostname. It is baked into every peer config at generation time. |
+**Replace:** `SERVERURL`.
 
 ## Deploy
 
@@ -109,7 +107,7 @@ LOG_CONFS=true
 
 2. Create the stack in Dockhand and paste the compose above.
 
-3. Over SSH, create `.env` in the stack directory with the contents above.
+3. Paste the `.env` above into the `.env` panel beside it.
 
 4. Deploy the stack in Dockhand.
 

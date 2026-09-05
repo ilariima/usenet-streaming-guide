@@ -82,16 +82,12 @@ BESZEL_HUB_URL=http://localhost:8090
 BESZEL_LISTEN=/beszel_socket/beszel.sock
 ```
 
-| Variable | What to put |
-|---|---|
-| `APP_URL` | `https://beszel.<your-domain>` — same hostname as the Pangolin resource below |
-| `BESZEL_TOKEN` | From the hub, step 5 |
-| `BESZEL_KEY` | From the hub, step 5 |
+**Replace:** `APP_URL`. `BESZEL_TOKEN` and `BESZEL_KEY` come from the hub in step 5.
 
 ## Deploy
 
 1. Create the stack in Dockhand and paste the compose.
-2. Over SSH, create `.env` in the stack directory with the contents above and set `APP_URL`. Leave the two `CHANGEME` values for now.
+2. Paste the `.env` above into the `.env` panel beside it and set `APP_URL`. Leave the two `CHANGEME` values for now.
 3. Deploy the stack in Dockhand.
 4. Create the Pangolin resource below, then open `https://beszel.<your-domain>` and create the admin account.
 5. Click **Add System** (top right). In the dialog set **Host / IP** to `/beszel_socket/beszel.sock`, and copy the token and the public key (the `ssh-ed25519 …` line) into `.env`:

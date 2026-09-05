@@ -149,16 +149,12 @@ REDIS_PASSWORD=CHANGEME_REDIS_PASSWORD
 TYPESENSE_API_KEY=CHANGEME_TYPESENSE_KEY
 ```
 
-| Variable | What to put |
-|---|---|
-| `MONGO_PASSWORD` | `openssl rand -hex 24` |
-| `REDIS_PASSWORD` | `openssl rand -hex 24` |
-| `TYPESENSE_API_KEY` | `openssl rand -hex 24` |
+**Replace:** `MONGO_PASSWORD`, `REDIS_PASSWORD`, `TYPESENSE_API_KEY` — `openssl rand -hex 24` for each.
 
 ## Deploy
 
 1. Dockhand → Stacks → Add Stack, name it `jikan`, paste the compose.
-2. Create the `.env` in the stack directory over SSH:
+2. Paste the `.env` above into the `.env` panel beside it:
 
    ```bash
    nano /opt/dockhand/stacks/jikan/.env

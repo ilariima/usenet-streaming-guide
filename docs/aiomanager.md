@@ -105,6 +105,8 @@ LOG_LEVEL=info
 LOG_PRETTY_PRINT=true
 ```
 
+**Nothing to replace.** The Postgres password is set in `compose.yaml`, not here.
+
 ## Deploy
 
 Deploy the pangolin stack first — it creates the `pangolin_frontend` network.
@@ -119,7 +121,7 @@ Deploy the pangolin stack first — it creates the `pangolin_frontend` network.
    `CHANGEME_DB_PASSWORD` in **both** places — `DATABASE_URL` and `POSTGRES_PASSWORD` —
    with that same value.
 
-3. Over SSH, create the `.env` in the stack directory:
+3. Paste the `.env` above into the `.env` panel beside it:
 
    ```bash
    nano /opt/dockhand/stacks/aiomanager/.env

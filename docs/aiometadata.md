@@ -125,21 +125,18 @@ TRAKT_CLIENT_SECRET=CHANGEME_TRAKT_CLIENT_SECRET
 TRAKT_REDIRECT_URI=https://aiometadata.example.com/api/auth/trakt/callback
 ```
 
-| Variable | What to put |
-|---|---|
-| `ADDON_PASSWORD` | `openssl rand -hex 16` |
-| `ADMIN_KEY` | `openssl rand -hex 16` |
-| `HOST_NAME` | Your public domain for this addon |
-| `SIMKL_CLIENT_ID` / `_SECRET` | From [simkl.com/oauth/applications](https://simkl.com/oauth/applications) |
-| `TRAKT_CLIENT_ID` / `_SECRET` | From the Trakt app you register in step 4 |
-| `TRAKT_REDIRECT_URI` | `https://<HOST_NAME>/api/auth/trakt/callback` |
+**Replace:** `HOST_NAME`, `TRAKT_REDIRECT_URI` (same domain as `HOST_NAME`),
+`ADDON_PASSWORD` and `ADMIN_KEY` (`openssl rand -hex 16` each), and the Simkl and
+Trakt client IDs and secrets — from
+[simkl.com/oauth/applications](https://simkl.com/oauth/applications) and
+[trakt.tv/oauth/applications](https://trakt.tv/oauth/applications).
 
 ## Deploy
 
 Deploy this before [jikan](jikan.md) — it creates the `aiometadata` network.
 
 1. Dockhand → **Stacks → Add Stack**, name `aiometadata`, paste the compose above, save.
-2. Over SSH, create `.env` in the stack directory next to the compose file:
+2. Paste the `.env` above into the `.env` panel beside it:
 
    ```bash
    nano /path/to/stacks/aiometadata/.env

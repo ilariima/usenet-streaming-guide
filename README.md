@@ -13,41 +13,25 @@ everything else.
 
 ```mermaid
 flowchart LR
-    user["Stremio"] -->|HTTPS| pangolin
+    client["client"] -->|HTTPS| pangolin["<b>pangolin</b>"]
 
-    subgraph edge [" "]
-        pangolin["<b>pangolin</b><br/>reverse proxy"]
-    end
+    pangolin --> aiostreams["<b>aiostreams</b>"]
+    pangolin --> aiometadata["<b>aiometadata</b>"]
+    pangolin --> aiomanager["<b>aiomanager</b>"]
+    pangolin --> beszel["<b>beszel</b>"]
 
-    subgraph services [" "]
-        aiostreams["<b>aiostreams</b>"]
-        aiometadata["<b>aiometadata</b>"]
-        jikan["<b>jikan</b>"]
-        aiomanager["<b>aiomanager</b>"]
-        beszel["<b>beszel</b>"]
-    end
+    aiometadata --> jikan["<b>jikan</b>"]
 
-    subgraph vpn [" "]
-        gluetun["<b>gluetun</b><br/>HTTP proxy :8888"]
-        ddns["<b>gluetun-ddns</b>"]
-    end
+    ddns["<b>gluetun-ddns</b>"] --> gluetun["<b>gluetun</b>"]
 
-    pangolin --> aiostreams
-    pangolin --> aiometadata
-    pangolin --> aiomanager
-    pangolin --> beszel
-    aiostreams -->|proxy| gluetun
-    aiometadata -->|"anime metadata"| jikan
-    gluetun -->|VPN| providers["usenet / debrid"]
-    ddns -->|"updates endpoint IP"| gluetun
-    wg["<b>wireguard</b>"] -->|admin access| host["the host"]
+    wireguard["<b>wireguard</b>"]
 
     classDef s fill:#1e4d3a,stroke:#4ade80,color:#fff
     classDef v fill:#4d3a1e,stroke:#fbbf24,color:#fff
     classDef e fill:#1e3a5f,stroke:#4a9eff,color:#fff
     class aiostreams,aiometadata,jikan,aiomanager,beszel s
     class gluetun,ddns v
-    class pangolin,wg e
+    class pangolin,wireguard e
 ```
 
 ---
@@ -84,15 +68,8 @@ stacks/<name>/compose.yaml
 stacks/<name>/.env.example
 ```
 
-In Dockhand: **Stacks → Create**, paste the compose, deploy. Dockhand can't create the
-`.env`, so make it over SSH in the stack directory before deploying:
-
-```bash
-cd /path/to/stacks/<name>
-nano .env
-```
-
-Replace every `CHANGEME_` value.
+In Dockhand: **Stacks → Create**, paste `compose.yaml` into the compose panel and
+`.env.example` into the `.env` panel beside it, fill in every `CHANGEME_` value, deploy.
 
 ---
 

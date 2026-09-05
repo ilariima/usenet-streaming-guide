@@ -64,11 +64,7 @@ AIOSTREAMS_AUTH=admin:CHANGEME_PASSWORD
 SECRET_KEY=CHANGEME_RUN_openssl_rand_hex_32
 ```
 
-| Variable | What to put |
-|---|---|
-| `BASE_URL` | Your public URL, e.g. `https://aiostreams.yourdomain.com` — must match the Pangolin resource hostname. |
-| `AIOSTREAMS_AUTH` | `user:password` for the dashboard. |
-| `SECRET_KEY` | Output of `openssl rand -hex 32`. Set once, keep it. |
+**Replace:** `BASE_URL`, `AIOSTREAMS_AUTH`, and `SECRET_KEY` (`openssl rand -hex 32`).
 
 ## Deploy
 
@@ -80,7 +76,7 @@ SECRET_KEY=CHANGEME_RUN_openssl_rand_hex_32
 
 2. In Dockhand, create a stack named `aiostreams` and paste the compose above.
 
-3. Over SSH, write the `.env` in the stack directory:
+3. Paste the `.env` above into the `.env` panel beside it:
 
    ```bash
    nano /opt/dockhand/stacks/aiostreams/.env
