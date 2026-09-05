@@ -16,10 +16,6 @@ stacks/*/aio-data/
 stacks/*/aio-db-data/
 stacks/*/aiometadata/
 
-# Your real filled-in configs — never published. See private/README.md
-private/**
-!private/README.md
-
 # NOTE: stacks/aiomanager/compose.yaml carries the Postgres password inline
 # (that is how upstream ships it). If you fill in a real password, do not
 # commit that file.
