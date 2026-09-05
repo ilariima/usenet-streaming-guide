@@ -149,7 +149,13 @@ REDIS_PASSWORD=CHANGEME_REDIS_PASSWORD
 TYPESENSE_API_KEY=CHANGEME_TYPESENSE_KEY
 ```
 
-**Replace:** `MONGO_PASSWORD`, `REDIS_PASSWORD`, `TYPESENSE_API_KEY` — `openssl rand -hex 24` for each.
+**Replace:** `MONGO_PASSWORD`, `REDIS_PASSWORD`, `TYPESENSE_API_KEY`.
+
+Run this in a terminal to generate one — once per value:
+
+```bash
+openssl rand -hex 24
+```
 
 ## Deploy
 
