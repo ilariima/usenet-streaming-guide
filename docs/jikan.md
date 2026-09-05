@@ -162,7 +162,9 @@ openssl rand -hex 24
 1. Dockhand → Stacks → Add Stack, name it `jikan`, paste the compose.
 2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
-4. Seed the Typesense index — without this, search, seasonal, top and genre catalogs return nothing:
+4. Fill the search index. It starts empty, so until you do this, anime search and the
+   seasonal, top and genre catalogs return nothing — single titles still work. Run these
+   on the host:
 
    ```bash
    docker exec jikan-rest php artisan indexer:genres
