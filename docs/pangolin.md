@@ -88,13 +88,9 @@ experimental:
       version: v<badger-version>
 ```
 
-Then, from your Pangolin directory:
+With Pangolin adopted into Dockhand, edit the stack there: change the pinned tags in the
+compose editor, save, and redeploy. Pressing Pull or Restart without changing the tags
+upgrades nothing.
 
-```bash
-cd /opt/pangolin
-docker compose down
-nano docker-compose.yml
-nano config/traefik/traefik_config.yml
-docker compose pull
-docker compose up -d
-```
+`config/traefik/traefik_config.yml` is not the compose file — edit it in Pangolin's
+directory, then redeploy the stack from Dockhand.
