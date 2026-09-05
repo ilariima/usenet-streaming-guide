@@ -167,9 +167,9 @@ openssl rand -hex 24
 1. Dockhand → Stacks → Add Stack, name it `jikan`, paste the compose.
 2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
-4. Fill the search index. It starts empty, so until you do this, anime search and the
-   seasonal, top and genre catalogs return nothing — single titles still work. Run these
-   on the host:
+4. Fill the search index. It starts empty, so until it's filled, anime search and the
+   seasonal, top and genre catalogs return nothing — single titles still work. jikan does
+   this daily by itself; run it now on the host so you don't wait for the first pass:
 
    ```bash
    docker exec jikan-rest php artisan indexer:genres
@@ -179,5 +179,4 @@ openssl rand -hex 24
 
 5. In [aiometadata](aiometadata.md), set `JIKAN_API_BASE=http://jikan-rest:8080/v4` and redeploy.
 
-Anime seasons change every three months. The seasonal catalog keeps serving whichever
-season you last indexed, so re-run `indexer:anime-current-season` when the season turns.
+Run these once. jikan re-runs them daily on its own from then on.
