@@ -35,7 +35,7 @@ docker inspect dockhand --format '{{ index .Config.Labels "com.docker.compose.pr
 ```
 
 That compose has two services, `dockhand` and `socket-proxy`. Add the mount under
-**`dockhand`** — that's the container doing the file browsing and importing:
+**`dockhand`**:
 
 ```yaml
 services:
