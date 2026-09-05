@@ -160,12 +160,7 @@ openssl rand -hex 24
 ## Deploy
 
 1. Dockhand → Stacks → Add Stack, name it `jikan`, paste the compose.
-2. Paste the `.env` above into the `.env` panel beside it:
-
-   ```bash
-   nano /opt/dockhand/stacks/jikan/.env
-   ```
-
+2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
 4. Seed the Typesense index — without this, search, seasonal, top and genre catalogs return nothing:
 
@@ -177,4 +172,5 @@ openssl rand -hex 24
 
 5. In [aiometadata](aiometadata.md), set `JIKAN_API_BASE=http://jikan-rest:8080/v4` and redeploy.
 
-Re-run `indexer:anime-current-season` each season.
+Anime seasons change every three months. The seasonal catalog keeps serving whichever
+season you last indexed, so re-run `indexer:anime-current-season` when the season turns.

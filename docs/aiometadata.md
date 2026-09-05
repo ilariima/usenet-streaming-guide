@@ -136,12 +136,7 @@ Trakt client IDs and secrets — from
 Deploy this before [jikan](jikan.md) — it creates the `aiometadata` network.
 
 1. Dockhand → **Stacks → Add Stack**, name `aiometadata`, paste the compose above, save.
-2. Paste the `.env` above into the `.env` panel beside it:
-
-   ```bash
-   nano /path/to/stacks/aiometadata/.env
-   ```
-
+2. Paste the `.env` above into the `.env` panel beside it.
 3. Deploy the stack in Dockhand.
 4. Trakt: create a **new** app at [trakt.tv/oauth/applications](https://trakt.tv/oauth/applications)
    with Redirect URI `https://<HOST_NAME>/api/auth/trakt/callback` — no trailing slash. Put its

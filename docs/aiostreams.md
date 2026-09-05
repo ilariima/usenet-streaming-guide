@@ -76,12 +76,7 @@ SECRET_KEY=CHANGEME_RUN_openssl_rand_hex_32
 
 2. In Dockhand, create a stack named `aiostreams` and paste the compose above.
 
-3. Paste the `.env` above into the `.env` panel beside it:
-
-   ```bash
-   nano /opt/dockhand/stacks/aiostreams/.env
-   ```
-
+3. Paste the `.env` above into the `.env` panel beside it.
 4. Deploy the stack in Dockhand.
 
 5. Open `BASE_URL`, log in, and configure the addon from the dashboard — follow [Redhair 6.2](https://redhair.gitbook.io/redhair-guides/selfhosting-guide-gui-version#setting-up-auth-and-reverse-proxy-for-aiostreams). Install the generated manifest URL in Stremio.

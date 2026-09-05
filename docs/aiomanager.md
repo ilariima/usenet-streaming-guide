@@ -121,12 +121,7 @@ Deploy the pangolin stack first — it creates the `pangolin_frontend` network.
    `CHANGEME_DB_PASSWORD` in **both** places — `DATABASE_URL` and `POSTGRES_PASSWORD` —
    with that same value.
 
-3. Paste the `.env` above into the `.env` panel beside it:
-
-   ```bash
-   nano /opt/dockhand/stacks/aiomanager/.env
-   ```
-
+3. Paste the `.env` above into the `.env` panel beside it.
 4. Deploy the stack in Dockhand.
 
 ## Pangolin resource
