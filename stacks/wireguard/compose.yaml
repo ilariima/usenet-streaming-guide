@@ -1,0 +1,36 @@
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wireguard
+
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+
+    env_file:
+      - .env
+
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SERVERURL=${SERVERURL}
+      - SERVERPORT=${SERVERPORT}
+      - PEERS=${PEERS}
+      - PEERDNS=${PEERDNS}
+      - INTERNAL_SUBNET=${INTERNAL_SUBNET}
+      - ALLOWEDIPS=${ALLOWEDIPS}
+      - LOG_CONFS=${LOG_CONFS}
+
+    volumes:
+      - ${CONFIG_PATH}:/config
+      - /lib/modules:/lib/modules
+
+    ports:
+      # Host port comes from SERVERPORT so it always matches the peer configs.
+      - ${SERVERPORT}:51820/udp
+
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+
+    restart: unless-stopped

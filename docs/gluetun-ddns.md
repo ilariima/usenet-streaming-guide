@@ -1,0 +1,450 @@
+# gluetun-ddns
+
+Watches a DDNS hostname and, when it resolves to a new address, rewrites
+`WIREGUARD_ENDPOINT_IP` in gluetun's `.env` and tells Dockhand to force-redeploy gluetun.
+
+Deploy [gluetun](gluetun.md) first.
+
+## compose.yaml
+
+```yaml
+services:
+  gluetun-ddns:
+    image: ${WATCHER_IMAGE:-alpine:latest}
+    container_name: ${SIDECAR_CONTAINER_NAME:-gluetun-ddns}
+    restart: unless-stopped
+    environment:
+      DDNS_HOST: ${DDNS_HOST:?Set DDNS_HOST in .env}
+      CHECK_INTERVAL: ${CHECK_INTERVAL:-60}
+      STARTUP_DELAY: ${STARTUP_DELAY:-15}
+      DEPLOY_TIMEOUT: ${DEPLOY_TIMEOUT:-300}
+      MAX_DEPLOY_BACKOFF: ${MAX_DEPLOY_BACKOFF:-900}
+      TARGET_VARIABLE: ${TARGET_VARIABLE:-WIREGUARD_ENDPOINT_IP}
+      # The stack directory is mounted at /target, so this is the file
+      # inside it that the watcher edits. Normally the stack's own .env.
+      TARGET_ENV_FILE: /target/${TARGET_ENV_FILENAME:-.env}
+      TARGET_DIR: /target
+      STATE_FILE: /state/applied-ip
+      DOCKHAND_URL: ${DOCKHAND_URL:-http://dockhand:3000}
+      DOCKHAND_ENV_NAME: ${DOCKHAND_ENV_NAME:-}
+      DOCKHAND_ENV_ID: ${DOCKHAND_ENV_ID:-}
+      DOCKHAND_STACK: ${DOCKHAND_STACK:?Set DOCKHAND_STACK in .env}
+      DOCKHAND_TOKEN: ${DOCKHAND_TOKEN:-}
+      # Compose fills this in with this stack's own project name, so the
+      # watcher can refuse to force-redeploy itself.
+      WATCHER_STACK: ${COMPOSE_PROJECT_NAME:-}
+    volumes:
+      # The whole stack directory, not just the file. A single-file bind
+      # mount is severed the moment anything replaces the file on the
+      # host, and Dockhand rewrites stack .env files when you edit them.
+      - type: bind
+        source: ${GLUETUN_STACK_DIR_HOST:?Set GLUETUN_STACK_DIR_HOST in .env}
+        target: /target
+        bind:
+          create_host_path: false
+      - gluetun_ddns_state:/state
+    networks:
+      - dockhand
+      - egress
+    healthcheck:
+      # The window must outlast one full cycle including a slow deploy,
+      # otherwise a long redeploy would mark a healthy watcher unhealthy.
+      test:
+        - CMD-SHELL
+        - 'last=$$(cat /tmp/last-loop 2>/dev/null || echo 0); now=$$(date +%s); max=$$((CHECK_INTERVAL * 5 + DEPLOY_TIMEOUT + 120)); [ "$$last" -gt 0 ] && [ $$((now - last)) -lt "$$max" ]'
+      interval: 90s
+      timeout: 5s
+      retries: 2
+      start_period: 90s
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -u
+
+        # Compose normally supplies these, but default them here so the
+        # script still starts if it is run with a leaner environment.
+        MAX_DEPLOY_BACKOFF=$${MAX_DEPLOY_BACKOFF:-900}
+        WATCHER_STACK=$${WATCHER_STACK:-}
+        TARGET_DIR=$${TARGET_DIR:-/target}
+
+        log() {
+          echo "$$(date) $$*"
+        }
+
+        config_error() {
+          log "ERROR: $$*"
+          exit 1
+        }
+
+        case "$$CHECK_INTERVAL" in
+          *[!0-9]*|'') config_error "CHECK_INTERVAL must be a positive integer" ;;
+        esac
+        [ "$$CHECK_INTERVAL" -gt 0 ] || config_error "CHECK_INTERVAL must be greater than zero"
+
+        case "$$STARTUP_DELAY" in
+          *[!0-9]*|'') config_error "STARTUP_DELAY must be a non-negative integer" ;;
+        esac
+
+        case "$$DEPLOY_TIMEOUT" in
+          *[!0-9]*|'') config_error "DEPLOY_TIMEOUT must be a positive integer" ;;
+        esac
+        [ "$$DEPLOY_TIMEOUT" -gt 0 ] || config_error "DEPLOY_TIMEOUT must be greater than zero"
+
+        case "$$MAX_DEPLOY_BACKOFF" in
+          *[!0-9]*|'') config_error "MAX_DEPLOY_BACKOFF must be a positive integer" ;;
+        esac
+        [ "$$MAX_DEPLOY_BACKOFF" -gt 0 ] || config_error "MAX_DEPLOY_BACKOFF must be greater than zero"
+        [ "$$MAX_DEPLOY_BACKOFF" -ge "$$CHECK_INTERVAL" ] || MAX_DEPLOY_BACKOFF=$$CHECK_INTERVAL
+
+        printf '%s\n' "$$TARGET_VARIABLE" | grep -Eq '^[A-Za-z_][A-Za-z0-9_]*$$' || \
+          config_error "TARGET_VARIABLE is not a valid environment-variable name"
+
+        [ -n "$$DDNS_HOST" ] || config_error "DDNS_HOST is empty"
+        [ -n "$$DOCKHAND_URL" ] || config_error "DOCKHAND_URL is empty"
+        [ -n "$$DOCKHAND_STACK" ] || config_error "DOCKHAND_STACK is empty"
+
+        [ -d "$$TARGET_DIR" ] || \
+          config_error "the Gluetun stack directory is not mounted at $$TARGET_DIR; check GLUETUN_STACK_DIR_HOST"
+        [ -f "$$TARGET_ENV_FILE" ] || \
+          config_error "env file does not exist: $$TARGET_ENV_FILE (check GLUETUN_STACK_DIR_HOST and TARGET_ENV_FILENAME)"
+        [ -w "$$TARGET_ENV_FILE" ] || config_error "env file is not writable: $$TARGET_ENV_FILE"
+        # The file is replaced by rename, so the directory must be writable too.
+        [ -w "$$TARGET_DIR" ] || \
+          config_error "the stack directory $$TARGET_DIR is not writable, which is required to replace the env file atomically"
+
+        if [ -n "$$WATCHER_STACK" ] && [ "$$WATCHER_STACK" = "$$DOCKHAND_STACK" ]; then
+          config_error "DOCKHAND_STACK is '$$DOCKHAND_STACK', which is this watcher's own stack; it would force-redeploy itself in a loop. Point DOCKHAND_STACK at the Gluetun stack instead."
+        fi
+
+        if [ -z "$$DOCKHAND_ENV_ID" ] && [ -z "$$DOCKHAND_ENV_NAME" ]; then
+          config_error "set either DOCKHAND_ENV_NAME or DOCKHAND_ENV_ID"
+        fi
+
+        if [ -n "$$DOCKHAND_ENV_ID" ]; then
+          case "$$DOCKHAND_ENV_ID" in
+            *[!0-9]*) config_error "DOCKHAND_ENV_ID must be numeric" ;;
+          esac
+        fi
+
+        DOCKHAND_URL=$${DOCKHAND_URL%/}
+
+        # The watcher exists to repair connectivity, so it must not give up
+        # when the network is not ready yet. /tmp/last-loop is deliberately
+        # left unwritten until this succeeds, so a watcher that can never
+        # install its tools is reported unhealthy instead of looking alive.
+        APK_ATTEMPT=1
+        APK_DELAY=10
+        while ! apk add --no-cache curl bind-tools jq >/dev/null 2>&1; do
+          log "ERROR: could not install curl/bind-tools/jq (attempt $$APK_ATTEMPT); retrying in $${APK_DELAY}s"
+          APK_ATTEMPT=$$((APK_ATTEMPT + 1))
+          sleep "$$APK_DELAY"
+          [ "$$APK_DELAY" -lt 60 ] && APK_DELAY=$$((APK_DELAY * 2))
+          [ "$$APK_DELAY" -gt 60 ] && APK_DELAY=60
+        done
+
+        date +%s > /tmp/last-loop
+
+        dockhand_curl() {
+          if [ -n "$${DOCKHAND_TOKEN:-}" ]; then
+            curl -H "Authorization: Bearer $$DOCKHAND_TOKEN" "$$@"
+          else
+            curl "$$@"
+          fi
+        }
+
+        get_environment_id() {
+          if ENVIRONMENTS=$$(dockhand_curl \
+            --silent \
+            --show-error \
+            --fail-with-body \
+            --connect-timeout 5 \
+            --max-time 15 \
+            "$${DOCKHAND_URL}/api/environments"); then
+            printf '%s' "$$ENVIRONMENTS" | jq -er \
+              --arg name "$$DOCKHAND_ENV_NAME" \
+              '(if type == "array" then . else (.environments // []) end)
+               | map(select(.name == $$name))
+               | first
+               | .id // empty'
+          else
+            return 1
+          fi
+        }
+
+        read_target_value() {
+          awk -v key="$$TARGET_VARIABLE" '
+            index($$0, key "=") == 1 {
+              value = substr($$0, length(key) + 2)
+              sub(/\r$$/, "", value)
+              print value
+              exit
+            }
+          ' "$$1"
+        }
+
+        update_target_file() {
+          # Written beside the original and renamed into place, so the file
+          # is never observed half-written. It holds the WireGuard private
+          # key, so a truncating in-place write is not acceptable.
+          ENV_TMP="$${TARGET_ENV_FILE}.ddns-tmp"
+
+          ENV_OWNER=$$(stat -c '%u:%g' "$$TARGET_ENV_FILE") || {
+            log "ERROR: could not read ownership of $$TARGET_ENV_FILE"
+            return 1
+          }
+          ENV_MODE=$$(stat -c '%a' "$$TARGET_ENV_FILE") || {
+            log "ERROR: could not read permissions of $$TARGET_ENV_FILE"
+            return 1
+          }
+
+          if ! awk -v key="$$TARGET_VARIABLE" -v value="$$NEW" '
+            BEGIN { found = 0 }
+            index($$0, key "=") == 1 {
+              if (found == 0) {
+                print key "=" value
+                found = 1
+              }
+              next
+            }
+            { print }
+            END {
+              if (found == 0) {
+                print key "=" value
+              }
+            }
+          ' "$$TARGET_ENV_FILE" > "$$ENV_TMP"; then
+            rm -f "$$ENV_TMP"
+            log "ERROR: could not generate the updated env file"
+            return 1
+          fi
+
+          TEMP_VALUE=$$(read_target_value "$$ENV_TMP")
+          if [ "$$TEMP_VALUE" != "$$NEW" ]; then
+            rm -f "$$ENV_TMP"
+            log "ERROR: generated env file failed validation"
+            return 1
+          fi
+
+          if ! chown "$$ENV_OWNER" "$$ENV_TMP"; then
+            rm -f "$$ENV_TMP"
+            log "ERROR: could not preserve ownership on the updated env file"
+            return 1
+          fi
+
+          if ! chmod "$$ENV_MODE" "$$ENV_TMP"; then
+            rm -f "$$ENV_TMP"
+            log "ERROR: could not preserve permissions on the updated env file"
+            return 1
+          fi
+
+          if ! mv "$$ENV_TMP" "$$TARGET_ENV_FILE"; then
+            rm -f "$$ENV_TMP"
+            log "ERROR: could not install the updated env file"
+            return 1
+          fi
+
+          return 0
+        }
+
+        deploy_target_stack() {
+          STACK_PATH=$$(jq -nr --arg value "$$DOCKHAND_STACK" '$$value | @uri')
+
+          if RESPONSE=$$(dockhand_curl \
+            --silent \
+            --show-error \
+            --fail-with-body \
+            --connect-timeout 5 \
+            --max-time "$$DEPLOY_TIMEOUT" \
+            -X POST \
+            "$${DOCKHAND_URL}/api/stacks/$${STACK_PATH}/deploy?env=$${DOCKHAND_ENV_ID}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            --data '{"pull":false,"build":false,"forceRecreate":true}' 2>&1); then
+            printf '%s\n' "$$RESPONSE"
+
+            if printf '%s' "$$RESPONSE" | jq -e '.success == true' >/dev/null 2>&1; then
+              return 0
+            fi
+
+            log "ERROR: Dockhand responded, but the deployment result was not successful"
+            return 1
+          else
+            CURL_STATUS=$$?
+            log "ERROR: Dockhand request failed (curl exit $$CURL_STATUS): $$RESPONSE"
+            return 1
+          fi
+        }
+
+        log "starting in $${STARTUP_DELAY}s"
+        sleep "$$STARTUP_DELAY"
+
+        if [ -z "$$DOCKHAND_ENV_ID" ]; then
+          while true; do
+            if DOCKHAND_ENV_ID=$$(get_environment_id) && \
+               case "$$DOCKHAND_ENV_ID" in *[!0-9]*|'') false ;; *) true ;; esac; then
+              break
+            fi
+
+            log "ERROR: Dockhand environment '$$DOCKHAND_ENV_NAME' was not found; retrying in 30s"
+            date +%s > /tmp/last-loop
+            sleep 30
+          done
+        fi
+
+        if [ -n "$$DOCKHAND_ENV_NAME" ]; then
+          log "using Dockhand environment '$$DOCKHAND_ENV_NAME' (id $$DOCKHAND_ENV_ID)"
+        else
+          log "using Dockhand environment id $$DOCKHAND_ENV_ID"
+        fi
+
+        log "watcher started; checking $${DDNS_HOST} every $${CHECK_INTERVAL}s"
+        log "editing $$TARGET_VARIABLE in $$TARGET_ENV_FILE"
+
+        # DNS keeps being polled every CHECK_INTERVAL. Only failed deploy
+        # attempts are rate limited, so a persistent Dockhand outage cannot
+        # turn into a force-recreate every cycle for hours on end.
+        DEPLOY_BACKOFF=0
+        NEXT_DEPLOY_AT=0
+
+        while true; do
+          date +%s > /tmp/last-loop
+
+          NEW=$$(dig +time=5 +tries=2 +short A "$$DDNS_HOST" | awk '
+            /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$$/ {
+              split($$0, octets, ".")
+              if (octets[1] <= 255 && octets[2] <= 255 && octets[3] <= 255 && octets[4] <= 255) {
+                print
+              }
+            }
+          ' | sort -u | head -n 1)
+
+          if [ -z "$$NEW" ]; then
+            log "ERROR: IPv4 DNS resolution failed for $$DDNS_HOST"
+          elif [ ! -f "$$TARGET_ENV_FILE" ]; then
+            log "ERROR: env file disappeared: $$TARGET_ENV_FILE"
+          else
+            CUR=$$(read_target_value "$$TARGET_ENV_FILE")
+            APPLIED=$$(cat "$$STATE_FILE" 2>/dev/null || true)
+            DESIRED_STATE="$${DOCKHAND_URL}|$${DOCKHAND_ENV_ID}|$${DOCKHAND_STACK}|$${TARGET_VARIABLE}|$${NEW}"
+            NEEDS_DEPLOY=0
+
+            if [ "$$NEW" != "$$CUR" ]; then
+              log "DDNS changed: $${CUR:-missing} -> $$NEW"
+
+              if ! update_target_file; then
+                date +%s > /tmp/last-loop
+                sleep "$$CHECK_INTERVAL"
+                continue
+              fi
+
+              VERIFY=$$(read_target_value "$$TARGET_ENV_FILE")
+              if [ "$$VERIFY" != "$$NEW" ]; then
+                log "ERROR: env write verification failed; file contains '$$VERIFY'"
+                date +%s > /tmp/last-loop
+                sleep "$$CHECK_INTERVAL"
+                continue
+              fi
+
+              log "$$TARGET_VARIABLE updated to $$NEW"
+              NEEDS_DEPLOY=1
+
+              # A new address is new information, so retry without waiting
+              # out any backoff left over from an earlier failure.
+              DEPLOY_BACKOFF=0
+              NEXT_DEPLOY_AT=0
+            fi
+
+            if [ "$$APPLIED" != "$$DESIRED_STATE" ]; then
+              NEEDS_DEPLOY=1
+            fi
+
+            if [ "$$NEEDS_DEPLOY" -eq 1 ]; then
+              NOW=$$(date +%s)
+
+              if [ "$$NOW" -lt "$$NEXT_DEPLOY_AT" ]; then
+                log "deploy backoff active; next attempt in $$((NEXT_DEPLOY_AT - NOW))s"
+              else
+                log "requesting Dockhand force-redeploy of stack '$$DOCKHAND_STACK'"
+
+                if deploy_target_stack; then
+                  DEPLOY_BACKOFF=0
+                  NEXT_DEPLOY_AT=0
+
+                  if printf '%s\n' "$$DESIRED_STATE" > "$${STATE_FILE}.tmp" && \
+                     mv "$${STATE_FILE}.tmp" "$$STATE_FILE"; then
+                    log "SUCCESS: stack '$$DOCKHAND_STACK' recreated with $$TARGET_VARIABLE=$$NEW"
+                  else
+                    log "ERROR: deployment succeeded, but state could not be saved; retrying next cycle"
+                  fi
+                else
+                  if [ "$$DEPLOY_BACKOFF" -eq 0 ]; then
+                    DEPLOY_BACKOFF=$$CHECK_INTERVAL
+                  else
+                    DEPLOY_BACKOFF=$$((DEPLOY_BACKOFF * 2))
+                  fi
+
+                  [ "$$DEPLOY_BACKOFF" -gt "$$MAX_DEPLOY_BACKOFF" ] && \
+                    DEPLOY_BACKOFF=$$MAX_DEPLOY_BACKOFF
+
+                  NEXT_DEPLOY_AT=$$(( $$(date +%s) + DEPLOY_BACKOFF ))
+                  log "ERROR: Dockhand redeploy failed; next attempt in $${DEPLOY_BACKOFF}s"
+                fi
+              fi
+            else
+              log "no change ($$NEW)"
+            fi
+          fi
+
+          date +%s > /tmp/last-loop
+          sleep "$$CHECK_INTERVAL"
+        done
+
+networks:
+  dockhand:
+    external: true
+    name: ${DOCKHAND_NETWORK:?Set DOCKHAND_NETWORK in .env}
+  egress:
+    driver: bridge
+
+volumes:
+  gluetun_ddns_state:
+```
+
+## .env
+
+This stack declares no `env_file` — its values go in Dockhand's environment editor, not a
+file on disk.
+
+```dotenv
+DDNS_HOST=CHANGE_ME.example.com
+GLUETUN_STACK_DIR_HOST="/var/lib/docker/volumes/dockhand_dockhand_data/_data/stacks/Your Environment/gluetun"
+DOCKHAND_STACK=gluetun
+DOCKHAND_NETWORK=your_dockhand_network
+DOCKHAND_ENV_NAME="Your Environment"
+```
+
+`scripts/gluetun-ddns-find-values.sh` prints these five lines filled in — see step 1.
+
+| Variable | What to put |
+| --- | --- |
+| `DDNS_HOST` | The DDNS hostname that follows your VPN endpoint. The script cannot work this one out. |
+| `DOCKHAND_TOKEN` | Only if Dockhand authentication is on. Add it as a sixth line. |
+
+## Deploy
+
+1. Copy `scripts/gluetun-ddns-find-values.sh` to the Docker host and run it:
+
+   ```bash
+   sh gluetun-ddns-find-values.sh
+   ```
+
+   It prints the five lines above with your values in them. Copy them.
+
+2. In Dockhand, create a Compose stack named `gluetun-ddns`. The name must differ from your
+   gluetun stack.
+
+3. Paste the compose file into the compose editor, and the five lines into the environment
+   editor. Replace `CHANGE_ME.example.com` with your DDNS hostname.
+
+4. Deploy.

@@ -1,0 +1,26 @@
+services:
+  aiostreams:
+    image: ghcr.io/viren070/aiostreams:nightly
+    container_name: aiostreams
+    restart: unless-stopped
+    expose:
+      - 3000
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    networks:
+      - pangolin_frontend
+      - aiostreams
+      - gluetun
+
+networks:
+  # Created by the Pangolin stack.
+  pangolin_frontend:
+    external: true
+  # Created by this stack. Other addons attach to it as external.
+  aiostreams:
+    name: aiostreams
+  # Created by the gluetun stack.
+  gluetun:
+    external: true

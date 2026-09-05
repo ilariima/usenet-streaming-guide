@@ -1,0 +1,25 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=wireguard
+      - HTTPPROXY=on
+      - HTTPPROXY_LISTENING_ADDRESS=:8888
+    env_file:
+      - .env
+    networks:
+      - gluetun
+    restart: unless-stopped
+
+networks:
+  # Created by this stack. `name:` pins the literal network name so consumers can
+  # attach to it as `external: true` — without it compose would prefix the
+  # project name and produce e.g. `gluetun_gluetun`.
+  gluetun:
+    name: gluetun
