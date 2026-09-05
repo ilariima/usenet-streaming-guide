@@ -1,24 +1,5 @@
-# Never commit real secrets — only .env.example belongs in this repo
+# check.sh writes a temporary .env into each stack directory while validating
 .env
 **/.env
-!**/.env.example
-*.key
-*.pem
-*.conf
-!**/*.example.conf
 
-# macOS
 .DS_Store
-
-# Runtime state written next to the compose files on deploy
-stacks/*/data/
-stacks/*/aio-data/
-stacks/*/aio-db-data/
-stacks/*/aiometadata/
-
-# NOTE: stacks/aiomanager/compose.yaml carries the Postgres password inline
-# (that is how upstream ships it). If you fill in a real password, do not
-# commit that file.
-
-# WireGuard peer configs and server keys
-stacks/*/config/
