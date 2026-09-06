@@ -39,12 +39,6 @@ flowchart LR
 
 ---
 
-## Setup
-
-**[pangolin](docs/pangolin.md)** — installed via Redhair's guide. Every service below that
-you reach from a browser needs a resource on it, and this page has that procedure plus how
-to update Pangolin.
-
 ## Services
 
 Deploy in this order. Each one creates or attaches to a Docker network the next depends on.
@@ -60,21 +54,17 @@ Deploy in this order. Each one creates or attaches to a Docker network the next 
 | 7 | **[wireguard](docs/wireguard.md)** | VPN into the host for admin access |
 | 8 | **[beszel](docs/beszel.md)** | Resource monitoring |
 
+**[pangolin](docs/pangolin.md)** — how to add a resource for the services that need one,
+adopt it into Dockhand, and update it.
+
 ---
 
 ## Deploying
 
-Every stack has a ready directory under [`stacks/`](stacks/):
+Each page has the compose file and the `.env` for that service.
 
-```
-stacks/<name>/compose.yaml
-stacks/<name>/.env.example
-```
-
-In Dockhand: **Stacks → Create**, paste `compose.yaml` into the compose panel and
-`.env.example` into the `.env` panel beside it, fill in every `CHANGEME_` value, deploy.
-
-gluetun-ddns is the exception — it has no `.env.example`; a script generates its values.
+In Dockhand: **Stacks → Create**, paste the compose into the compose panel and the `.env`
+into the panel beside it, fill in every `CHANGEME_` value, deploy.
 
 ---
 
